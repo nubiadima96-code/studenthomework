@@ -186,6 +186,10 @@ https://yurii.ru/ref11/rl-1986851.php
 
 КАБІНЕТ ДЛЯ СТУДЕНТІВ
 
+GitHub: https://github.com/nubiadima96-code/studenthomework
+Vercel: Import цей репозиторій → Root Directory = сайт → Deploy
+        У проєкті Vercel увімкнути Git LFS (книга Захисту велика).
+
 Папка: сайт
 Відкрити: сайт/Відкрити кабінет.command
 Або в браузері: http://127.0.0.1:8765/

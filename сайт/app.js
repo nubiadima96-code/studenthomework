@@ -59,7 +59,7 @@ function isLessonOpen(course, index) {
 
 async function sendToSheet(payload) {
   const url = typeof SHEETS_WEBAPP_URL === "string" ? SHEETS_WEBAPP_URL.trim() : "";
-  if (!url) return { ok: false, skipped: true };
+  if (!url) return { ok: false, skipped: true, reason: "немає адреси таблиці" };
   try {
     await fetch(url, {
       method: "POST",
@@ -69,8 +69,21 @@ async function sendToSheet(payload) {
     });
     return { ok: true };
   } catch (error) {
-    return { ok: false };
+    return {
+      ok: false,
+      reason: error && error.message ? error.message : "помилка мережі",
+    };
   }
+}
+
+function setQuizMessage(node, text, kind) {
+  const tones = {
+    ok: "mt-4 text-sm font-semibold text-emerald-900",
+    warn: "mt-4 text-sm font-semibold text-amber-800",
+    err: "mt-4 text-sm font-semibold text-rose-700",
+  };
+  node.className = tones[kind] || tones.err;
+  node.textContent = text;
 }
 
 function route() {
@@ -613,7 +626,9 @@ function quizBlock(course, lesson, index) {
     el(
       "p",
       "mt-2 text-sm leading-6 text-stone-600",
-      "10 питань і одне письмове. Щоб відкрити наступну тему, треба мінімум " + PASS + " з 10. Якщо менше — тест анулюється, і здаєш знову."
+      "10 питань з варіантами (обовʼязково) і одне письмове (за бажанням). Щоб відкрити наступну тему, треба мінімум " +
+        PASS +
+        " з 10. Якщо менше — тест анулюється, і здаєш знову."
     )
   );
 
@@ -627,6 +642,9 @@ function quizBlock(course, lesson, index) {
   let writeText = "";
   const form = el("div", "mt-4 space-y-6");
   const result = el("p", "mt-4 text-sm font-semibold text-emerald-900", "");
+  result.setAttribute("role", "status");
+  result.setAttribute("aria-live", "polite");
+  const fieldBoxes = [];
 
   questions.forEach((item, qi) => {
     const box = el("fieldset", "rounded-xl border border-stone-200 p-4");
@@ -642,12 +660,18 @@ function quizBlock(course, lesson, index) {
       input.setAttribute("aria-label", option);
       input.addEventListener("change", () => {
         answers[qi] = oi;
+        box.classList.remove("border-rose-400", "bg-rose-50/40");
+        if (result.dataset.kind === "incomplete") {
+          result.textContent = "";
+          result.dataset.kind = "";
+        }
       });
       label.append(input, el("span", "text-sm leading-6 text-stone-700", option));
       list.append(label);
     });
     box.append(list);
     form.append(box);
+    fieldBoxes.push(box);
   });
 
   const writeBox = el("div", "rounded-xl border border-stone-200 p-4");
@@ -655,15 +679,21 @@ function quizBlock(course, lesson, index) {
   writeTitle.append(
     icon("pen"),
     document.createTextNode(
-      questions.length + 1 + ". " + (lesson.write || "Напиши коротко головне з теми своїми словами.")
+      questions.length +
+        1 +
+        ". (необовʼязково) " +
+        (lesson.write || "Напиши коротко головне з теми своїми словами.")
     )
   );
   writeBox.append(writeTitle);
+  writeBox.append(
+    el("p", "mt-1 text-xs leading-5 text-stone-500", "Можна здати тест без тексту — це не блокує оцінку.")
+  );
   const writeInput = document.createElement("textarea");
   writeInput.rows = 6;
   writeInput.value = writeText;
-  writeInput.placeholder = "Пиши тут…";
-  writeInput.setAttribute("aria-label", "Письмова відповідь");
+  writeInput.placeholder = "Пиши тут за бажанням…";
+  writeInput.setAttribute("aria-label", "Письмова відповідь (необовʼязково)");
   writeInput.className =
     "mt-3 w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-900 outline-none focus:border-emerald-900";
   writeInput.addEventListener("input", () => {
@@ -684,22 +714,35 @@ function quizBlock(course, lesson, index) {
   check.addEventListener("click", async () => {
     let score = 0;
     const picked = [];
+    const missing = [];
     questions.forEach((item, qi) => {
       const value = answers[qi];
       picked[qi] = value;
-      if (value === item.a) score += 1;
+      if (value == null) missing.push(qi + 1);
+      else if (value === item.a) score += 1;
+      fieldBoxes[qi].classList.toggle("border-rose-400", value == null);
+      fieldBoxes[qi].classList.toggle("bg-rose-50/40", value == null);
     });
-    if (picked.some((value) => value == null)) {
-      result.textContent = "Відповідь на всі питання з варіантами.";
-      return;
-    }
-    if (!writeText.trim()) {
-      result.textContent = "Напиши письмову відповідь.";
+
+    if (missing.length) {
+      result.dataset.kind = "incomplete";
+      const list =
+        missing.length === 1
+          ? "питання " + missing[0]
+          : "питання " + missing.join(", ");
+      setQuizMessage(
+        result,
+        "Не вибрано відповіді на " +
+          list +
+          ". Відміть варіант у кожному питанні (червоним підсвічено порожні) і натисни «Здати тест» знову.",
+        "err"
+      );
+      fieldBoxes[missing[0] - 1].scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
-    const fields = form.querySelectorAll("fieldset");
-    fields.forEach((field, qi) => {
+    fieldBoxes.forEach((field, qi) => {
+      field.classList.remove("border-rose-400", "bg-rose-50/40");
       field.querySelectorAll("label").forEach((label, oi) => {
         label.classList.remove("bg-emerald-50", "bg-rose-50");
         if (oi === questions[qi].a) label.classList.add("bg-emerald-50");
@@ -711,11 +754,20 @@ function quizBlock(course, lesson, index) {
       delete state.quiz[key];
       delete state.progress[key];
       save();
-      result.className = "mt-4 text-sm font-semibold text-rose-700";
-      result.textContent =
-        "Правильно " + score + " з " + questions.length + ". Треба мінімум " + PASS + ". Тест анульовано — здай знову з початку.";
+      setQuizMessage(
+        result,
+        "Правильно " +
+          score +
+          " з " +
+          questions.length +
+          ". Треба мінімум " +
+          PASS +
+          ". Тест анульовано — здай знову з початку.",
+        "err"
+      );
       check.disabled = true;
-      check.classList.add("opacity-50");
+      check.setAttribute("aria-disabled", "true");
+      check.classList.add("opacity-50", "cursor-not-allowed");
       setTimeout(() => {
         render();
         location.hash = "#/" + course.id + "/u/" + lesson.id;
@@ -723,26 +775,34 @@ function quizBlock(course, lesson, index) {
       return;
     }
 
+    const writeValue = writeText.trim();
     state.quiz[key] = {
       done: true,
       passed: true,
       score: score,
       total: questions.length,
       answers: picked,
-      write: writeText.trim(),
+      write: writeValue,
     };
     state.progress[key] = {
       passed: true,
       score: score,
       total: questions.length,
-      write: writeText.trim(),
+      write: writeValue,
       at: new Date().toISOString(),
     };
     save();
 
-    result.textContent = "Правильно " + score + " з " + questions.length + ". Зберігаю…";
+    setQuizMessage(
+      result,
+      "Правильно " + score + " з " + questions.length + ". Зберігаю результат і надсилаю викладачу…",
+      "ok"
+    );
     check.disabled = true;
-    await sendToSheet({
+    check.setAttribute("aria-disabled", "true");
+    check.classList.add("opacity-50", "cursor-not-allowed");
+
+    const sent = await sendToSheet({
       group: state.student.group,
       name: state.student.name,
       email: state.student.email,
@@ -751,9 +811,45 @@ function quizBlock(course, lesson, index) {
       topicTitle: lesson.title,
       score: score,
       total: questions.length,
-      write: writeText.trim(),
+      write: writeValue,
       status: "здано",
     });
+
+    if (sent.skipped) {
+      state.progress[key].sheetNote = "локально (таблицю не налаштовано)";
+      save();
+      setQuizMessage(
+        result,
+        "Тест зараховано (" +
+          score +
+          " з " +
+          questions.length +
+          "), але в Google Таблицю не надіслано: " +
+          (sent.reason || "немає адреси") +
+          ". Скажи викладачу.",
+        "warn"
+      );
+      setTimeout(() => render(), 1800);
+      return;
+    }
+    if (!sent.ok) {
+      state.progress[key].sheetNote = "помилка надсилання";
+      save();
+      setQuizMessage(
+        result,
+        "Тест зараховано у тебе на пристрої (" +
+          score +
+          " з " +
+          questions.length +
+          "), але надсилання викладачу не вдалось (" +
+          (sent.reason || "невідома причина") +
+          "). Перевір інтернет і скажи викладачу.",
+        "warn"
+      );
+      setTimeout(() => render(), 2200);
+      return;
+    }
+
     render();
   });
 
@@ -799,7 +895,9 @@ function lessonPage(course, lessonId) {
   task.append(rowTitle("list", "Завдання"));
   const list = el("ol", "mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-stone-800");
   list.append(el("li", "", "Прочитай сторінки " + lesson.from + "–" + lesson.to + " у книжці (натисни на маленький екран нижче)."));
-  list.append(el("li", "", "Здай тест на " + PASS + " з 10 або більше (і письмове питання)."));
+  list.append(
+    el("li", "", "Здай тест на " + PASS + " з 10 або більше. Письмове питання — за бажанням.")
+  );
   task.append(list);
   task.append(el("p", "mt-3 text-sm text-stone-600", "Тема " + (index + 1) + " з " + course.lessons.length + "."));
 

@@ -1,6 +1,6 @@
 /**
  * Вставити в Google Таблицю відомості:
- * https://docs.google.com/spreadsheets/d/1fB_ANbRjxB45wj-WDUtWPEt4kGUw60Hd5JGVJPDlbX8eM/edit
+ * https://docs.google.com/spreadsheets/d/1Fyrgxv9SJ2vYa4z3rNbfqGSTgKzXPg4himX-G67CqPI/edit
  *
  * Розширення → Apps Script → вставити цей код → Зберегти.
  * Розгортання → Нове розгортання → Тип: вебзастосунок
@@ -9,7 +9,7 @@
  * Скопіювати URL і вставити в сайт/config.js → SHEETS_WEBAPP_URL
  */
 
-var SHEET_ID = "1fB_ANbRjxB45wj-WDUtWPEt4kGUw60Hd5JGVJPDlbX8eM";
+var SHEET_ID = "1Fyrgxv9SJ2vYa4z3rNbfqGSTgKzXPg4himX-G67CqPI";
 var TAB = "Прогрес";
 
 function ensureSheet_() {

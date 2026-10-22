@@ -1,0 +1,10 @@
+.DS_Store
+**/.DS_Store
+*.log
+/tmp/
+відомість-відвідування.xlsx
+Чат.txt
+сайт/books/zahyst-tmp.pdf
+.vercel
+.env
+.env.*

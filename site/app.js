@@ -798,7 +798,7 @@ function quizBlock(course, lesson, index) {
         "mt-2 text-sm leading-6 text-stone-600",
         "10 питань з варіантами (обовʼязково) і одне письмове (за бажанням). Щоб відкрити наступну тему, треба мінімум " +
           PASS +
-          " з 10. Якщо менше — тест анулюється, і здаєш знову."
+          " з 10. Якщо менше — побачиш помилки, виправиш і здаси знову."
       )
     );
   }
@@ -832,10 +832,17 @@ function quizBlock(course, lesson, index) {
       input.addEventListener("change", () => {
         answers[qi] = oi;
         box.classList.remove("border-rose-400", "bg-rose-50/40");
-        if (result.dataset.kind === "incomplete") {
-          result.textContent = "";
-          result.dataset.kind = "";
+        box.querySelectorAll("label").forEach((label) => {
+          label.classList.remove("bg-emerald-50", "bg-rose-50");
+        });
+        if (result.dataset.kind === "incomplete" || result.dataset.kind === "fail") {
+          result.textContent = "Відповідь змінено. Можеш здати тест знову.";
+          result.dataset.kind = "edited";
+          result.className = "mt-4 text-sm font-semibold text-stone-600";
         }
+        check.disabled = false;
+        check.removeAttribute("aria-disabled");
+        check.classList.remove("opacity-50", "cursor-not-allowed");
       });
       label.append(input, el("span", "text-sm leading-6 text-stone-700", option));
       list.append(label);
@@ -920,32 +927,7 @@ function quizBlock(course, lesson, index) {
     });
 
     if (score < PASS) {
-      check.disabled = true;
-      check.setAttribute("aria-disabled", "true");
-      check.classList.add("opacity-50", "cursor-not-allowed");
-      if (retaking) {
-        delete state.retake[key];
-        save();
-        setQuizMessage(
-          result,
-          "Правильно " +
-            score +
-            " з " +
-            questions.length +
-            ". Повтор не зараховано (треба мінімум " +
-            PASS +
-            "). Попередній результат лишається, наступні теми відкриті.",
-          "warn"
-        );
-        setTimeout(() => {
-          render();
-          location.hash = "#/" + course.id + "/u/" + lesson.id;
-        }, 2400);
-        return;
-      }
-      delete state.quiz[key];
-      delete state.progress[key];
-      save();
+      result.dataset.kind = "fail";
       setQuizMessage(
         result,
         "Правильно " +
@@ -954,13 +936,14 @@ function quizBlock(course, lesson, index) {
           questions.length +
           ". Треба мінімум " +
           PASS +
-          ". Тест анульовано — здай знову з початку.",
-        "err"
+          ". Зелене — правильно, червоне — твоя помилка. Подивись, виправ відповіді і знову натисни «Здати тест»." +
+          (retaking ? " Попередній зарахований результат поки лишається." : ""),
+        retaking ? "warn" : "err"
       );
-      setTimeout(() => {
-        render();
-        location.hash = "#/" + course.id + "/u/" + lesson.id;
-      }, 2200);
+      check.disabled = false;
+      check.removeAttribute("aria-disabled");
+      check.classList.remove("opacity-50", "cursor-not-allowed");
+      result.scrollIntoView({ behavior: "smooth", block: "nearest" });
       return;
     }
 

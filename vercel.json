@@ -1,16 +1,13 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/", "destination": "/site/index.html" },
-    { "source": "/((?!site/).*)", "destination": "/site/$1" }
+    { "source": "/", "destination": "/site" },
+    { "source": "/books/:path*", "destination": "/site/books/:path*" },
+    { "source": "/img/:path*", "destination": "/site/img/:path*" },
+    { "source": "/vendor/:path*", "destination": "/site/vendor/:path*" },
+    { "source": "/:file(.*\\.(js|css|html|json|png|jpg|jpeg|webp|svg|pdf|gs))", "destination": "/site/:file" }
   ],
   "headers": [
-    {
-      "source": "/books/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" }
-      ]
-    },
     {
       "source": "/site/books/(.*)",
       "headers": [

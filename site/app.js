@@ -5,8 +5,9 @@ const app = document.querySelector("#app");
 
 function emptyState() {
   return {
-    v: 4,
+    v: 5,
     student: null,
+    savedProfile: null,
     pageMarks: [],
     quiz: {},
     progress: {},
@@ -24,10 +25,35 @@ function load() {
     }
     if (!parsed.progress) parsed.progress = {};
     if (!parsed.retake) parsed.retake = {};
+    if (!parsed.savedProfile && parsed.student && parsed.student.email) {
+      parsed.savedProfile = {
+        group: parsed.student.group || "",
+        name: parsed.student.name || "",
+        email: parsed.student.email || "",
+      };
+    }
     return parsed;
   } catch (error) {
     return emptyState();
   }
+}
+
+function normalizeEmail(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function hasPassedTopics() {
+  return Object.keys(state.progress || {}).some((key) => state.progress[key] && state.progress[key].passed);
+}
+
+function rememberProfile(profile) {
+  state.savedProfile = {
+    group: profile.group || "",
+    name: profile.name || "",
+    email: profile.email || "",
+  };
 }
 
 function isRetaking(course, lesson) {
@@ -198,6 +224,7 @@ function shell(title, crumbs, body, wide) {
     out.type = "button";
     out.setAttribute("aria-label", "Вийти");
     out.addEventListener("click", () => {
+      if (state.student) rememberProfile(state.student);
       state.student = null;
       save();
       location.hash = "#/login";
@@ -238,11 +265,32 @@ function loginPage() {
     el(
       "p",
       "text-sm leading-6 text-stone-600 sm:text-[0.95rem]",
-      "Вкажи групу, ім’я і email. Далі теми відкриваються по черзі: щоб іти далі, треба здати тест на " +
-        PASS +
-        " з 10."
+      "Вкажи групу, ім’я і email. Після першого входу вони збережуться на цьому пристрої — прогрес тем теж лишається тут."
     )
   );
+
+  const saved = state.savedProfile;
+  if (saved && saved.email) {
+    const note = el("div", "soft-card border-emerald-900/20 bg-emerald-50/70 p-4");
+    note.append(el("p", "text-sm font-semibold text-emerald-900", "Збережено на цьому пристрої"));
+    note.append(
+      el(
+        "p",
+        "mt-1 text-sm leading-6 text-stone-700",
+        saved.name + " · " + saved.email + (saved.group ? " · " + saved.group : "")
+      )
+    );
+    if (hasPassedTopics()) {
+      note.append(
+        el(
+          "p",
+          "mt-2 text-sm leading-6 text-stone-600",
+          "Уже є здані теми. Заходь з цим самим email — прогрес не зникне."
+        )
+      );
+    }
+    body.append(note);
+  }
 
   const form = el("form", "soft-card space-y-4 p-5 sm:p-6");
   form.setAttribute("novalidate", "true");
@@ -282,6 +330,33 @@ function loginPage() {
   const nameField = field("Ім’я", "text", "Наприклад, Олена Коваль");
   const emailField = field("Email", "email", "name@gmail.com");
   const err = el("p", "min-h-[1.25rem] text-sm font-semibold text-rose-700", "");
+  err.setAttribute("role", "alert");
+  const warn = el("p", "text-sm leading-6 text-amber-800", "");
+  warn.setAttribute("role", "status");
+
+  if (saved) {
+    if (saved.group) group.value = saved.group;
+    if (saved.name) nameField.input.value = saved.name;
+    if (saved.email) emailField.input.value = saved.email;
+  }
+
+  const useSaved = el(
+    "button",
+    "hidden w-full rounded-full border border-emerald-900/30 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-100",
+    "Підставити збережені ім’я і email"
+  );
+  useSaved.type = "button";
+  useSaved.setAttribute("aria-label", "Підставити збережені ім’я і email");
+  useSaved.addEventListener("click", () => {
+    if (!state.savedProfile) return;
+    group.value = state.savedProfile.group || "";
+    nameField.input.value = state.savedProfile.name || "";
+    emailField.input.value = state.savedProfile.email || "";
+    err.textContent = "";
+    warn.textContent = "Підставив збережені дані. Натисни «Увійти в кабінет».";
+    useSaved.classList.add("hidden");
+  });
+
   const submit = el(
     "button",
     "inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-900 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800",
@@ -290,7 +365,7 @@ function loginPage() {
   submit.type = "submit";
   submit.append(icon("user", "icon-on-dark"), document.createTextNode("Увійти в кабінет"));
 
-  form.append(groupLabel, nameField.wrap, emailField.wrap, err, submit);
+  form.append(groupLabel, nameField.wrap, emailField.wrap, warn, useSaved, err, submit);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const g = group.value.trim();
@@ -300,7 +375,24 @@ function loginPage() {
       err.textContent = "Заповни групу, ім’я і правильний email.";
       return;
     }
+
+    const prev = state.savedProfile;
+    const emailChanged = prev && prev.email && normalizeEmail(prev.email) !== normalizeEmail(mail);
+    if (emailChanged && hasPassedTopics()) {
+      err.textContent =
+        "Інший email. На цьому пристрої прогрес уже є для " +
+        (prev.name || "збереженого студента") +
+        " (" +
+        prev.email +
+        "). Підстав збережені дані — інакше здаватиметься, що все зникло.";
+      warn.textContent = "";
+      useSaved.classList.remove("hidden");
+      emailField.input.focus();
+      return;
+    }
+
     state.student = { group: g, name: n, email: mail };
+    rememberProfile(state.student);
     save();
     location.hash = "#/";
     render();

@@ -1090,15 +1090,20 @@ function quizBlock(course, lesson, index) {
 
 function lessonPage(course, lessonId) {
   const lesson = course.lessons.find((item) => item.id === lessonId);
-  const back = link("#/" + course.id, "mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-900", "");
+  const back = link("#/" + course.id, "inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-900", "");
   back.append(icon("back"), document.createTextNode(course.title));
   if (!lesson) {
-    shell(course.title, back, el("p", "text-stone-600", "Такої теми немає."));
+    const missing = el("div", "mx-auto w-full max-w-3xl space-y-4");
+    missing.append(back, el("p", "text-stone-600", "Такої теми немає."));
+    shell("", null, missing);
     return;
   }
   const index = course.lessons.findIndex((item) => item.id === lessonId);
   if (!isLessonOpen(course, index)) {
-    const locked = el("section", "mx-auto w-full max-w-3xl soft-card p-5");
+    const lockedWrap = el("div", "mx-auto w-full max-w-3xl space-y-4");
+    lockedWrap.append(back);
+    lockedWrap.append(el("h1", "font-serif text-2xl font-semibold tracking-tight sm:text-4xl", lesson.title));
+    const locked = el("section", "soft-card p-5");
     locked.append(rowTitle("lock", "Тема ще закрита"));
     locked.append(
       el(
@@ -1108,15 +1113,18 @@ function lessonPage(course, lessonId) {
       )
     );
     locked.append(link("#/" + course.id, "mt-4 inline-flex text-sm font-semibold text-emerald-900", "← До списку тем"));
-    shell(lesson.title, back, locked);
+    lockedWrap.append(locked);
+    shell("", null, lockedWrap);
     return;
   }
 
   const body = el("div", "mx-auto w-full max-w-3xl space-y-5");
+  body.append(back);
+  body.append(el("h1", "font-serif text-2xl font-semibold tracking-tight sm:text-4xl", lesson.title));
 
   if (isPassed(course, lesson) && !isRetaking(course, lesson)) {
     body.append(congratsBlock(course, lesson, index));
-    shell(lesson.title, back, body);
+    shell("", null, body);
     return;
   }
 
@@ -1139,7 +1147,7 @@ function lessonPage(course, lessonId) {
   body.append(task);
   body.append(topicBook(course, lesson));
   body.append(quizBlock(course, lesson, index));
-  shell(lesson.title, back, body);
+  shell("", null, body);
 }
 
 function marksPage() {

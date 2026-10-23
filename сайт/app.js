@@ -5,11 +5,12 @@ const app = document.querySelector("#app");
 
 function emptyState() {
   return {
-    v: 3,
+    v: 4,
     student: null,
     pageMarks: [],
     quiz: {},
     progress: {},
+    retake: {},
   };
 }
 
@@ -22,10 +23,15 @@ function load() {
       parsed.student = { name: parsed.studentName, email: "", group: "" };
     }
     if (!parsed.progress) parsed.progress = {};
+    if (!parsed.retake) parsed.retake = {};
     return parsed;
   } catch (error) {
     return emptyState();
   }
+}
+
+function isRetaking(course, lesson) {
+  return !!(state.retake && state.retake[quizKey(course, lesson)]);
 }
 
 let state = load();
@@ -597,6 +603,7 @@ function congratsBlock(course, lesson, index) {
   if (score) {
     wrap.append(el("p", "mt-2 text-sm font-semibold text-emerald-900", "Результат: " + score.score + " з " + score.total + "."));
   }
+  const key = quizKey(course, lesson);
   const next = course.lessons[index + 1];
   const actions = el("div", "mt-5 flex flex-wrap gap-2");
   if (next) {
@@ -609,6 +616,20 @@ function congratsBlock(course, lesson, index) {
     go.querySelector(".icon").style.color = "#fff";
     actions.append(go);
   }
+  const retakeBtn = el(
+    "button",
+    "inline-flex items-center gap-1.5 rounded-full border border-emerald-900/30 bg-white px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50",
+    ""
+  );
+  retakeBtn.type = "button";
+  retakeBtn.setAttribute("aria-label", "Повторити тему");
+  retakeBtn.append(icon("pen"), document.createTextNode("Повторити тему"));
+  retakeBtn.addEventListener("click", () => {
+    state.retake[key] = true;
+    save();
+    render();
+  });
+  actions.append(retakeBtn);
   const back = link("#/" + course.id, "inline-flex items-center gap-1.5 rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700", "");
   back.append(document.createTextNode("До списку тем"));
   actions.append(back);
@@ -618,19 +639,45 @@ function congratsBlock(course, lesson, index) {
 
 function quizBlock(course, lesson, index) {
   const key = quizKey(course, lesson);
-  if (isPassed(course, lesson)) return congratsBlock(course, lesson, index);
+  const retaking = isRetaking(course, lesson);
+  if (isPassed(course, lesson) && !retaking) return congratsBlock(course, lesson, index);
 
   const wrap = el("section", "soft-card p-5");
-  wrap.append(rowTitle("check", "Тест"));
-  wrap.append(
-    el(
-      "p",
-      "mt-2 text-sm leading-6 text-stone-600",
-      "10 питань з варіантами (обовʼязково) і одне письмове (за бажанням). Щоб відкрити наступну тему, треба мінімум " +
-        PASS +
-        " з 10. Якщо менше — тест анулюється, і здаєш знову."
-    )
-  );
+  wrap.append(rowTitle("check", retaking ? "Повторний тест" : "Тест"));
+  if (retaking) {
+    wrap.append(
+      el(
+        "p",
+        "mt-2 text-sm leading-6 text-amber-800",
+        "Повтор теми. Якщо набереш менше " +
+          PASS +
+          " — попередній результат лишається, наступні теми не закриються. Якщо здаси — оновимо бал."
+      )
+    );
+    const cancel = el(
+      "button",
+      "mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-stone-600 hover:text-stone-900",
+      "Скасувати повтор"
+    );
+    cancel.type = "button";
+    cancel.setAttribute("aria-label", "Скасувати повтор");
+    cancel.addEventListener("click", () => {
+      delete state.retake[key];
+      save();
+      render();
+    });
+    wrap.append(cancel);
+  } else {
+    wrap.append(
+      el(
+        "p",
+        "mt-2 text-sm leading-6 text-stone-600",
+        "10 питань з варіантами (обовʼязково) і одне письмове (за бажанням). Щоб відкрити наступну тему, треба мінімум " +
+          PASS +
+          " з 10. Якщо менше — тест анулюється, і здаєш знову."
+      )
+    );
+  }
 
   const questions = lesson.quiz || [];
   if (!questions.length) {
@@ -751,6 +798,29 @@ function quizBlock(course, lesson, index) {
     });
 
     if (score < PASS) {
+      check.disabled = true;
+      check.setAttribute("aria-disabled", "true");
+      check.classList.add("opacity-50", "cursor-not-allowed");
+      if (retaking) {
+        delete state.retake[key];
+        save();
+        setQuizMessage(
+          result,
+          "Правильно " +
+            score +
+            " з " +
+            questions.length +
+            ". Повтор не зараховано (треба мінімум " +
+            PASS +
+            "). Попередній результат лишається, наступні теми відкриті.",
+          "warn"
+        );
+        setTimeout(() => {
+          render();
+          location.hash = "#/" + course.id + "/u/" + lesson.id;
+        }, 2400);
+        return;
+      }
       delete state.quiz[key];
       delete state.progress[key];
       save();
@@ -765,9 +835,6 @@ function quizBlock(course, lesson, index) {
           ". Тест анульовано — здай знову з початку.",
         "err"
       );
-      check.disabled = true;
-      check.setAttribute("aria-disabled", "true");
-      check.classList.add("opacity-50", "cursor-not-allowed");
       setTimeout(() => {
         render();
         location.hash = "#/" + course.id + "/u/" + lesson.id;
@@ -776,6 +843,8 @@ function quizBlock(course, lesson, index) {
     }
 
     const writeValue = writeText.trim();
+    const statusLabel = retaking ? "перездано" : "здано";
+    delete state.retake[key];
     state.quiz[key] = {
       done: true,
       passed: true,
@@ -812,7 +881,7 @@ function quizBlock(course, lesson, index) {
       score: score,
       total: questions.length,
       write: writeValue,
-      status: "здано",
+      status: statusLabel,
     });
 
     if (sent.skipped) {
@@ -884,7 +953,7 @@ function lessonPage(course, lessonId) {
   const body = el("div", "space-y-4");
   const top = el("div", "max-w-3xl space-y-4");
 
-  if (isPassed(course, lesson)) {
+  if (isPassed(course, lesson) && !isRetaking(course, lesson)) {
     top.append(congratsBlock(course, lesson, index));
     body.append(top);
     shell(lesson.title, back, body, true);
@@ -892,11 +961,17 @@ function lessonPage(course, lessonId) {
   }
 
   const task = el("section", "soft-card border-emerald-900/15 bg-emerald-50/60 p-5");
-  task.append(rowTitle("list", "Завдання"));
+  task.append(rowTitle("list", isRetaking(course, lesson) ? "Повтор теми" : "Завдання"));
   const list = el("ol", "mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-stone-800");
   list.append(el("li", "", "Прочитай сторінки " + lesson.from + "–" + lesson.to + " у книжці (натисни на маленький екран нижче)."));
   list.append(
-    el("li", "", "Здай тест на " + PASS + " з 10 або більше. Письмове питання — за бажанням.")
+    el(
+      "li",
+      "",
+      isRetaking(course, lesson)
+        ? "Здай тест знову на " + PASS + " з 10 або більше. Письмове — за бажанням."
+        : "Здай тест на " + PASS + " з 10 або більше. Письмове питання — за бажанням."
+    )
   );
   task.append(list);
   task.append(el("p", "mt-3 text-sm text-stone-600", "Тема " + (index + 1) + " з " + course.lessons.length + "."));

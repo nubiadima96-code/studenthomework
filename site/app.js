@@ -515,7 +515,7 @@ function bookFrame(src, title, fromPage, toPage) {
   const bar = el("div", "flex flex-wrap items-center justify-between gap-3 border-b border-stone-300 px-4 py-3");
   const status = el("p", "text-sm text-stone-600", "Відкриваю книжку…");
   status.setAttribute("aria-live", "polite");
-  bar.append(status, external(resolved, "text-sm font-semibold text-emerald-900", "Відкрити файл"));
+  bar.append(status);
   const scroller = el("div", "book-scroll");
   scroller.tabIndex = 0;
   scroller.setAttribute("aria-label", title);

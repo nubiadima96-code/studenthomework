@@ -1098,7 +1098,7 @@ function lessonPage(course, lessonId) {
   }
   const index = course.lessons.findIndex((item) => item.id === lessonId);
   if (!isLessonOpen(course, index)) {
-    const locked = el("section", "soft-card p-5");
+    const locked = el("section", "mx-auto w-full max-w-3xl soft-card p-5");
     locked.append(rowTitle("lock", "Тема ще закрита"));
     locked.append(
       el(
@@ -1112,13 +1112,11 @@ function lessonPage(course, lessonId) {
     return;
   }
 
-  const body = el("div", "space-y-4");
-  const top = el("div", "max-w-3xl space-y-4");
+  const body = el("div", "mx-auto w-full max-w-3xl space-y-5");
 
   if (isPassed(course, lesson) && !isRetaking(course, lesson)) {
-    top.append(congratsBlock(course, lesson, index));
-    body.append(top);
-    shell(lesson.title, back, body, true);
+    body.append(congratsBlock(course, lesson, index));
+    shell(lesson.title, back, body);
     return;
   }
 
@@ -1138,15 +1136,10 @@ function lessonPage(course, lessonId) {
   task.append(list);
   task.append(el("p", "mt-3 text-sm text-stone-600", "Тема " + (index + 1) + " з " + course.lessons.length + "."));
 
-  top.append(task);
-  body.append(top);
-  const bookWrap = el("div", "max-w-3xl");
-  bookWrap.append(topicBook(course, lesson));
-  body.append(bookWrap);
-  const bottom = el("div", "max-w-3xl");
-  bottom.append(quizBlock(course, lesson, index));
-  body.append(bottom);
-  shell(lesson.title, back, body, true);
+  body.append(task);
+  body.append(topicBook(course, lesson));
+  body.append(quizBlock(course, lesson, index));
+  shell(lesson.title, back, body);
 }
 
 function marksPage() {

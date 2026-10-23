@@ -84,12 +84,22 @@ function bookUrl(path) {
   if (/^https?:\/\//i.test(path)) return path;
   const file = String(path).split("/").pop();
   const host = location.hostname || "";
+  const onHosted =
+    /\.vercel\.app$/i.test(host) || host === "studenthomework.vercel.app";
+  const cdnFiles = typeof BOOK_CDN_FILES !== "undefined" && Array.isArray(BOOK_CDN_FILES) ? BOOK_CDN_FILES : [];
   const useCdn =
+    onHosted &&
     typeof BOOK_CDN === "string" &&
     BOOK_CDN &&
-    (/\.vercel\.app$/i.test(host) || host === "studenthomework.vercel.app");
+    cdnFiles.indexOf(file) >= 0;
   if (useCdn) return BOOK_CDN.replace(/\/?$/, "/") + file;
   return path;
+}
+
+function bookCdnFallback(path) {
+  if (!path || /^https?:\/\//i.test(path)) return "";
+  if (typeof BOOK_CDN !== "string" || !BOOK_CDN) return "";
+  return BOOK_CDN.replace(/\/?$/, "/") + String(path).split("/").pop();
 }
 
 function isPassed(course, lesson) {
@@ -592,20 +602,39 @@ async function mountBook(scroller, src, status, fromPage, toPage) {
     return;
   }
   let pdf;
+  let activeSrc = src;
   try {
-    const probe = await fetch(src, { method: "GET", headers: { Range: "bytes=0-15" } });
+    const probe = await fetch(activeSrc, { method: "GET", headers: { Range: "bytes=0-200" } });
     const head = await probe.text();
     if (/^version https:\/\/git-lfs\.github\.com\/spec\/v1/i.test(head)) {
-      status.textContent = "На сервері лежить лише посилання на книжку (Git LFS). Онови сторінку або натисни «Відкрити файл».";
+      const fallback = bookCdnFallback(src) || (typeof BOOK_CDN === "string" ? BOOK_CDN.replace(/\/?$/, "/") + String(src).split("/").pop() : "");
+      if (!fallback || fallback === activeSrc) {
+        status.textContent = "Книжка на сервері ще не підтягнулась. Онови сторінку за хвилину.";
+        return;
+      }
+      activeSrc = fallback;
+    }
+    pdf = await getPdf(activeSrc);
+  } catch (error) {
+    const fallback = bookCdnFallback(src);
+    if (fallback && fallback !== activeSrc) {
+      try {
+        activeSrc = fallback;
+        pdf = await getPdf(activeSrc);
+      } catch (error2) {
+        status.textContent =
+          "Книжка не відкрилась (" +
+          (error2 && error2.message ? error2.message : "помилка мережі") +
+          "). Онови сторінку.";
+        return;
+      }
+    } else {
+      status.textContent =
+        "Книжка не відкрилась (" +
+        (error && error.message ? error.message : "помилка мережі") +
+        "). Онови сторінку.";
       return;
     }
-    pdf = await getPdf(src);
-  } catch (error) {
-    status.textContent =
-      "Книжка не відкрилась (" +
-      (error && error.message ? error.message : "помилка мережі") +
-      "). Спробуй «Відкрити файл» або онови сторінку.";
-    return;
   }
   const total = pdf.numPages;
   const first = Math.min(Math.max(fromPage || 1, 1), total);

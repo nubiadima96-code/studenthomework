@@ -79,6 +79,19 @@ function quizKey(course, lesson) {
   return course.id + ":" + lesson.id;
 }
 
+function bookUrl(path) {
+  if (!path) return path;
+  if (/^https?:\/\//i.test(path)) return path;
+  const file = String(path).split("/").pop();
+  const host = location.hostname || "";
+  const useCdn =
+    typeof BOOK_CDN === "string" &&
+    BOOK_CDN &&
+    (/\.vercel\.app$/i.test(host) || host === "studenthomework.vercel.app");
+  if (useCdn) return BOOK_CDN.replace(/\/?$/, "/") + file;
+  return path;
+}
+
 function isPassed(course, lesson) {
   const row = state.progress[quizKey(course, lesson)];
   return !!(row && row.passed);
@@ -173,7 +186,7 @@ async function paintThumb(host, src, pageNumber) {
     return;
   }
   try {
-    const pdf = await getPdf(src);
+    const pdf = await getPdf(bookUrl(src));
     const page = await pdf.getPage(Math.min(Math.max(pageNumber || 1, 1), pdf.numPages));
     const base = page.getViewport({ scale: 1 });
     const scale = 140 / base.width;
@@ -497,16 +510,17 @@ if (window.pdfjsLib) {
 }
 
 function bookFrame(src, title, fromPage, toPage) {
+  const resolved = bookUrl(src);
   const wrap = el("div", "book-frame overflow-hidden rounded-2xl border border-stone-300 bg-white");
   const bar = el("div", "flex flex-wrap items-center justify-between gap-3 border-b border-stone-300 px-4 py-3");
   const status = el("p", "text-sm text-stone-600", "Відкриваю книжку…");
   status.setAttribute("aria-live", "polite");
-  bar.append(status, external(src, "text-sm font-semibold text-emerald-900", "Відкрити файл"));
+  bar.append(status, external(resolved, "text-sm font-semibold text-emerald-900", "Відкрити файл"));
   const scroller = el("div", "book-scroll");
   scroller.tabIndex = 0;
   scroller.setAttribute("aria-label", title);
   wrap.append(bar, scroller);
-  setTimeout(() => mountBook(scroller, src, status, fromPage || 1, toPage), 30);
+  setTimeout(() => mountBook(scroller, resolved, status, fromPage || 1, toPage), 30);
   return wrap;
 }
 
@@ -579,9 +593,18 @@ async function mountBook(scroller, src, status, fromPage, toPage) {
   }
   let pdf;
   try {
+    const probe = await fetch(src, { method: "GET", headers: { Range: "bytes=0-15" } });
+    const head = await probe.text();
+    if (/^version https:\/\/git-lfs\.github\.com\/spec\/v1/i.test(head)) {
+      status.textContent = "На сервері лежить лише посилання на книжку (Git LFS). Онови сторінку або натисни «Відкрити файл».";
+      return;
+    }
     pdf = await getPdf(src);
   } catch (error) {
-    status.textContent = "Книжка не відкрилась. Відкрий кабінет файлом «Відкрити кабінет».";
+    status.textContent =
+      "Книжка не відкрилась (" +
+      (error && error.message ? error.message : "помилка мережі") +
+      "). Спробуй «Відкрити файл» або онови сторінку.";
     return;
   }
   const total = pdf.numPages;

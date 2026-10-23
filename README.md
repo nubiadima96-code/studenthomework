@@ -5,26 +5,26 @@
 ## Локально
 
 ```bash
-cd сайт
+cd site
 python3 -m http.server 8765
 ```
 
-Або двічі клацни `сайт/Відкрити кабінет.command`.
+Або двічі клацни `site/Відкрити кабінет.command`.
 
 Відкрий: http://127.0.0.1:8765/
 
 ## Vercel
 
-1. Import репозиторій на [vercel.com](https://vercel.com).
-2. **Root Directory:** `сайт`
-3. Framework: Other (без build).
-4. Увімкни **Git LFS** у налаштуваннях проєкту (файл `zahyst.pdf` великий).
-5. Deploy.
+Імпорт репозиторію на [vercel.com](https://vercel.com).
+
+**Варіант А (найчистіший):** у Project Settings → General → **Root Directory** постав `site`. Framework: Other. Увімкни **Git LFS**.
+
+**Варіант Б:** без Root Directory — у корені є `vercel.json`, який віддає папку `site` на `/`.
 
 ## Google Таблиця (прогрес)
 
-Код: `сайт/sheets-script.gs`  
-URL вебзастосунку встав у `сайт/config.js` → `SHEETS_WEBAPP_URL`.
+Код: `site/sheets-script.gs`  
+URL вебзастосунку встав у `site/config.js` → `SHEETS_WEBAPP_URL`.
 
 ## Предмети
 

@@ -667,14 +667,103 @@ async function mountBook(scroller, src, status, fromPage, toPage) {
   scroller.addEventListener("scroll", showVisible);
 }
 
+function topicArtSvg(courseId, index, open) {
+  const variant = index % 4;
+  const muted = open ? 1 : 0.72;
+  if (courseId === "lfk") {
+    const scenes = [
+      `<rect width="160" height="120" fill="#e8f2ec"/>
+       <circle cx="118" cy="34" r="18" fill="#bbd5c4" opacity="${muted}"/>
+       <path d="M28 88c18-28 36-40 54-28 14 10 22 8 36-6" fill="none" stroke="#047857" stroke-width="5" stroke-linecap="round" opacity="${muted}"/>
+       <circle cx="52" cy="46" r="10" fill="#065f46" opacity="${muted}"/>
+       <path d="M52 56v22M42 68h20M40 92c8-10 16-10 24 0" fill="none" stroke="#065f46" stroke-width="4" stroke-linecap="round" opacity="${muted}"/>
+       <path d="M96 78c10 4 22 2 34-8" fill="none" stroke="#0f766e" stroke-width="4" stroke-linecap="round" opacity="${muted}"/>`,
+      `<rect width="160" height="120" fill="#eef6f1"/>
+       <ellipse cx="80" cy="70" rx="46" ry="18" fill="#c5ddd0" opacity="${muted}"/>
+       <path d="M54 62c0-18 12-30 26-30s26 12 26 30" fill="#065f46" opacity="${0.18 * muted}"/>
+       <path d="M80 34v40M64 48h32" stroke="#047857" stroke-width="5" stroke-linecap="round" opacity="${muted}"/>
+       <circle cx="124" cy="28" r="10" fill="#99c2ad" opacity="${muted}"/>`,
+      `<rect width="160" height="120" fill="#f3f8f4"/>
+       <path d="M20 86c20-6 40-28 58-28s38 22 62 28" fill="none" stroke="#0f766e" stroke-width="6" stroke-linecap="round" opacity="${muted}"/>
+       <circle cx="48" cy="42" r="12" fill="#065f46" opacity="${muted}"/>
+       <path d="M48 54l8 22 14-10 8 20" fill="none" stroke="#065f46" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="${muted}"/>
+       <rect x="108" y="40" width="28" height="36" rx="8" fill="#bbd5c4" opacity="${muted}"/>`,
+      `<rect width="160" height="120" fill="#e7f1eb"/>
+       <circle cx="40" cy="36" r="14" fill="#a7cbb8" opacity="${muted}"/>
+       <path d="M70 30h54v54H70z" fill="#fff" opacity="${0.55 * muted}"/>
+       <path d="M84 48h26M84 60h18M84 72h22" stroke="#047857" stroke-width="4" stroke-linecap="round" opacity="${muted}"/>
+       <path d="M38 70c12 18 28 26 52 26" fill="none" stroke="#065f46" stroke-width="5" stroke-linecap="round" opacity="${muted}"/>`,
+    ];
+    return scenes[variant];
+  }
+  if (courseId === "anatomia") {
+    const scenes = [
+      `<rect width="160" height="120" fill="#eef2f0"/>
+       <ellipse cx="80" cy="58" rx="28" ry="40" fill="#d7e3dc" opacity="${muted}"/>
+       <path d="M80 28v58M66 48h28M70 70h20" stroke="#065f46" stroke-width="4" stroke-linecap="round" opacity="${muted}"/>
+       <circle cx="80" cy="22" r="10" fill="#047857" opacity="${muted}"/>
+       <path d="M52 96c10-8 18-8 28 0s18 8 28 0" fill="none" stroke="#0f766e" stroke-width="4" opacity="${muted}"/>`,
+      `<rect width="160" height="120" fill="#f2f6f4"/>
+       <path d="M46 30h68v60H46z" rx="12" fill="#cfdcd5" opacity="${muted}"/>
+       <circle cx="80" cy="56" r="18" fill="#fff" opacity="${0.7 * muted}"/>
+       <path d="M80 42v28M66 56h28" stroke="#047857" stroke-width="4" stroke-linecap="round" opacity="${muted}"/>
+       <path d="M34 88h92" stroke="#99b5a6" stroke-width="6" stroke-linecap="round" opacity="${muted}"/>`,
+      `<rect width="160" height="120" fill="#e9f0ec"/>
+       <path d="M58 24c-10 18-10 36 0 54M102 24c10 18 10 36 0 54" fill="none" stroke="#065f46" stroke-width="5" stroke-linecap="round" opacity="${muted}"/>
+       <path d="M70 40h20M68 56h24M72 72h16" stroke="#0f766e" stroke-width="4" stroke-linecap="round" opacity="${muted}"/>
+       <circle cx="128" cy="30" r="12" fill="#bbd0c4" opacity="${muted}"/>`,
+      `<rect width="160" height="120" fill="#f4f7f5"/>
+       <rect x="42" y="28" width="76" height="64" rx="18" fill="#d5e4db" opacity="${muted}"/>
+       <path d="M62 48c8-10 28-10 36 0M62 68c10 12 26 12 36 0" fill="none" stroke="#047857" stroke-width="4" stroke-linecap="round" opacity="${muted}"/>
+       <circle cx="80" cy="58" r="6" fill="#065f46" opacity="${muted}"/>`,
+    ];
+    return scenes[variant];
+  }
+  const scenes = [
+    `<rect width="160" height="120" fill="#ece7dc"/>
+     <path d="M80 22l34 14v22c0 22-14 38-34 46-20-8-34-24-34-46V36z" fill="#065f46" opacity="${0.9 * muted}"/>
+     <path d="M80 36l20 8v14c0 14-8 24-20 29-12-5-20-15-20-29V44z" fill="#efe8d8" opacity="${muted}"/>
+     <circle cx="128" cy="28" r="10" fill="#c4b79a" opacity="${muted}"/>`,
+    `<rect width="160" height="120" fill="#f0ebe1"/>
+     <path d="M24 78c22-30 44-44 70-30 18 10 28 8 42-8" fill="none" stroke="#047857" stroke-width="5" stroke-linecap="round" opacity="${muted}"/>
+     <path d="M48 34h64v40H48z" fill="#065f46" opacity="${0.16 * muted}"/>
+     <path d="M64 48h32M64 60h22" stroke="#065f46" stroke-width="4" stroke-linecap="round" opacity="${muted}"/>
+     <circle cx="36" cy="40" r="12" fill="#b7a88a" opacity="${muted}"/>`,
+    `<rect width="160" height="120" fill="#ebe6db"/>
+     <circle cx="80" cy="56" r="34" fill="#d9d0bf" opacity="${muted}"/>
+     <path d="M80 28v56M58 56h44" stroke="#065f46" stroke-width="5" stroke-linecap="round" opacity="${muted}"/>
+     <path d="M56 78c8 10 16 14 24 14s16-4 24-14" fill="none" stroke="#0f766e" stroke-width="4" opacity="${muted}"/>`,
+    `<rect width="160" height="120" fill="#f2eee5"/>
+     <path d="M30 86h100" stroke="#c4b79a" stroke-width="8" stroke-linecap="round" opacity="${muted}"/>
+     <path d="M52 86V40l28-14 28 14v46" fill="#065f46" opacity="${0.85 * muted}"/>
+     <path d="M70 56h20M70 68h14" stroke="#efe8d8" stroke-width="4" stroke-linecap="round" opacity="${muted}"/>`,
+  ];
+  return scenes[variant];
+}
+
+function topicArt(course, index, open) {
+  const art = el("div", "topic-art" + (open ? "" : " is-locked"));
+  art.setAttribute("aria-hidden", "true");
+  art.innerHTML =
+    '<svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg" focusable="false">' +
+    topicArtSvg(course.id, index, open) +
+    "</svg>";
+  return art;
+}
+
 function lessonCard(course, lesson, index) {
   const open = isLessonOpen(course, index);
   const passed = isPassed(course, lesson);
   const node = open
-    ? link("#/" + course.id + "/u/" + lesson.id, "topic-row block rounded-2xl border border-stone-300 bg-white p-4 sm:p-5", "")
-    : el("div", "block rounded-2xl border border-stone-200 bg-stone-50 p-4 opacity-80 sm:p-5", "");
+    ? link(
+        "#/" + course.id + "/u/" + lesson.id,
+        "topic-row rounded-2xl border border-stone-300 bg-white p-4 sm:p-5",
+        ""
+      )
+    : el("div", "topic-row is-locked rounded-2xl border border-stone-200 bg-stone-50 p-4 sm:p-5", "");
 
-  const top = el("div", "flex flex-wrap items-center justify-between gap-2");
+  const body = el("div", "topic-card-body");
+  const top = el("div", "topic-card-meta");
   const badge = el("p", "inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-900", "");
   badge.append(icon(open ? "list" : "lock"), document.createTextNode("Тема " + (index + 1)));
   top.append(badge);
@@ -684,29 +773,35 @@ function lessonCard(course, lesson, index) {
     scoreNode.append(icon("check"), document.createTextNode(score));
     top.append(scoreNode);
   }
-  node.append(top);
-  node.append(el("h2", "mt-2 font-serif text-xl font-semibold sm:text-2xl", lesson.title));
-  const pages = el("p", "mt-2 inline-flex items-center gap-1.5 text-sm text-stone-600", "");
+  body.append(top);
+  body.append(el("h2", "font-serif text-xl font-semibold leading-snug sm:text-2xl", lesson.title));
+
+  const pages = el("p", "inline-flex items-center gap-1.5 text-sm text-stone-600", "");
   pages.append(icon("book"), document.createTextNode("Сторінки " + lesson.from + "–" + lesson.to));
-  node.append(pages);
-  const go = el("p", "mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-900", "");
+  body.append(pages);
+
+  const go = el("p", "topic-card-go", "");
   if (!open) go.append(icon("lock"), document.createTextNode("Спочатку здай попередню тему"));
   else if (passed) go.append(document.createTextNode("Пройдено · відкрити знову"), icon("arrow"));
   else go.append(document.createTextNode("Читати і здати тест"), icon("arrow"));
-  node.append(go);
+  body.append(go);
+
+  node.append(body, topicArt(course, index, open));
   return node;
 }
 
 function coursePage(course) {
-  const body = el("div", "max-w-3xl space-y-4");
+  const body = el("div", "mx-auto max-w-4xl space-y-5");
   body.append(
     el(
       "p",
-      "text-base leading-7 text-stone-700",
+      "max-w-2xl text-base leading-7 text-stone-700",
       "Теми йдуть по черзі. Наступна відкриється після тесту на " + PASS + " з 10 або більше."
     )
   );
-  course.lessons.forEach((lesson, index) => body.append(lessonCard(course, lesson, index)));
+  const list = el("div", "space-y-4 sm:space-y-5");
+  course.lessons.forEach((lesson, index) => list.append(lessonCard(course, lesson, index)));
+  body.append(list);
   shell(course.title, backHome(), body);
 }
 

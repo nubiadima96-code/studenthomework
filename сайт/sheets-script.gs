@@ -3,20 +3,29 @@
  * https://docs.google.com/spreadsheets/d/1Fyrgxv9SJ2vYa4z3rNbfqGSTgKzXPg4himX-G67CqPI/edit
  *
  * Розширення → Apps Script → вставити цей код → Зберегти.
- * Розгортання → Нове розгортання → Тип: вебзастосунок
+ * Ввести в дію → оновити розгортання (тип: вебзастосунок)
  *   Виконувати від: мене
  *   Хто має доступ: усі
- * Скопіювати URL і вставити в сайт/config.js → SHEETS_WEBAPP_URL
+ *
+ * Прогрес пишеться на окрему вкладку для кожної групи:
+ *   «Прогрес 11-П», «Прогрес 30-ФІЗ»
  */
 
 var SHEET_ID = "1Fyrgxv9SJ2vYa4z3rNbfqGSTgKzXPg4himX-G67CqPI";
-var TAB = "Прогрес";
+var GROUPS = ["11-П", "30-ФІЗ"];
 
-function ensureSheet_() {
+function tabNameForGroup_(group) {
+  var g = String(group || "").trim();
+  if (!g) return "Прогрес";
+  return "Прогрес " + g;
+}
+
+function ensureSheet_(group) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
-  var sheet = ss.getSheetByName(TAB);
+  var tab = tabNameForGroup_(group);
+  var sheet = ss.getSheetByName(tab);
   if (!sheet) {
-    sheet = ss.insertSheet(TAB);
+    sheet = ss.insertSheet(tab);
     sheet.appendRow([
       "Дата",
       "Група",
@@ -38,7 +47,7 @@ function ensureSheet_() {
 function doPost(e) {
   try {
     var data = JSON.parse((e && e.postData && e.postData.contents) || "{}");
-    var sheet = ensureSheet_();
+    var sheet = ensureSheet_(data.group);
     sheet.appendRow([
       new Date(),
       data.group || "",
@@ -52,7 +61,7 @@ function doPost(e) {
       data.write || "",
       data.status || "здано",
     ]);
-    return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, tab: sheet.getName() })).setMimeType(
       ContentService.MimeType.JSON
     );
   } catch (err) {
@@ -63,6 +72,10 @@ function doPost(e) {
 }
 
 function doGet() {
-  ensureSheet_();
-  return ContentService.createTextOutput("Кабінет РЕГІК: прийом прогресу працює.");
+  for (var i = 0; i < GROUPS.length; i++) {
+    ensureSheet_(GROUPS[i]);
+  }
+  return ContentService.createTextOutput(
+    "Кабінет РЕГІК: прогрес по групах — " + GROUPS.map(tabNameForGroup_).join(", ")
+  );
 }

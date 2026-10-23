@@ -178,15 +178,23 @@ function external(href, className, text) {
 function shell(title, crumbs, body, wide) {
   app.replaceChildren();
   const width = wide ? "max-w-7xl" : "max-w-5xl";
-  const header = el("header", "sticky top-0 z-20 border-b border-stone-300/80 bg-stone-100/95 backdrop-blur");
-  const bar = el("div", "mx-auto flex " + width + " items-center gap-3 px-4 py-3 sm:px-6");
-  const brand = link("#/", "min-w-0", "");
-  brand.append(el("span", "block text-xs font-semibold uppercase tracking-[0.16em] text-emerald-900", "РЕГІК"));
-  brand.append(el("span", "block truncate text-base font-semibold", "Кабінет Гудими"));
-  bar.append(brand, el("div", "flex-1"));
+  const header = el("header", "sticky top-0 z-20 border-b border-stone-300/80 bg-[#f3efe6]/95 backdrop-blur");
+  const bar = el("div", "site-header-bar mx-auto " + width + " px-4 py-2.5 sm:px-6");
+  const brand = link("#/", "min-w-0 shrink", "");
+  brand.append(el("span", "block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-emerald-900 sm:text-xs", "РЕГІК"));
+  brand.append(el("span", "block truncate text-sm font-semibold sm:text-base", "Кабінет Гудими"));
+  bar.append(brand, el("div", "min-w-2 flex-1"));
   if (isLoggedIn()) {
-    const who = el("span", "hidden max-w-[10rem] truncate text-sm text-stone-600 sm:inline", state.student.name + " · " + state.student.group);
-    const out = el("button", "rounded-full border border-stone-300 px-3 py-1.5 text-sm font-semibold text-stone-700", "Вийти");
+    const who = el(
+      "span",
+      "max-w-[7.5rem] truncate text-xs text-stone-600 sm:max-w-[12rem] sm:text-sm",
+      state.student.name + " · " + state.student.group
+    );
+    const out = el(
+      "button",
+      "shrink-0 rounded-full border border-stone-300 bg-white px-3 py-1.5 text-sm font-semibold text-stone-700 hover:border-emerald-800 hover:text-emerald-900",
+      "Вийти"
+    );
     out.type = "button";
     out.setAttribute("aria-label", "Вийти");
     out.addEventListener("click", () => {
@@ -200,9 +208,9 @@ function shell(title, crumbs, body, wide) {
   header.append(bar);
   app.append(header);
 
-  const main = el("main", "mx-auto " + width + " px-4 py-8 sm:px-6");
+  const main = el("main", "mx-auto " + width + " px-4 py-6 sm:px-6 sm:py-8");
   if (crumbs) main.append(crumbs);
-  if (title) main.append(el("h1", "mb-6 font-serif text-3xl font-semibold tracking-tight sm:text-4xl", title));
+  if (title) main.append(el("h1", "mb-5 font-serif text-2xl font-semibold tracking-tight sm:mb-6 sm:text-4xl", title));
   main.append(body);
   app.append(main);
 }
@@ -224,26 +232,25 @@ function quizScore(course, lesson) {
 }
 
 function loginPage() {
-  const body = el("div", "mx-auto max-w-md space-y-6");
+  const body = el("div", "page-login space-y-5 sm:space-y-6");
   body.append(el("h1", "font-serif text-3xl font-semibold tracking-tight sm:text-4xl", "Вхід студента"));
   body.append(
     el(
       "p",
-      "text-sm leading-6 text-stone-600",
+      "text-sm leading-6 text-stone-600 sm:text-[0.95rem]",
       "Вкажи групу, ім’я і email. Далі теми відкриваються по черзі: щоб іти далі, треба здати тест на " +
         PASS +
         " з 10."
     )
   );
 
-  const form = el("form", "soft-card space-y-4 p-5");
+  const form = el("form", "soft-card space-y-4 p-5 sm:p-6");
   form.setAttribute("novalidate", "true");
 
   const groupLabel = el("label", "block");
   groupLabel.append(el("span", "mb-2 block text-sm font-semibold text-stone-700", "Група"));
   const group = document.createElement("select");
-  group.className =
-    "w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-900";
+  group.className = "field-control field-select";
   group.setAttribute("aria-label", "Група");
   group.required = true;
   const emptyOpt = document.createElement("option");
@@ -266,23 +273,22 @@ function loginPage() {
     input.required = true;
     input.placeholder = placeholder;
     input.setAttribute("aria-label", labelText);
-    input.className =
-      "w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-900";
+    input.autocomplete = type === "email" ? "email" : "name";
+    input.className = "field-control";
     wrap.append(input);
     return { wrap, input };
   }
 
   const nameField = field("Ім’я", "text", "Наприклад, Олена Коваль");
   const emailField = field("Email", "email", "name@gmail.com");
-  const err = el("p", "text-sm font-semibold text-rose-700", "");
+  const err = el("p", "min-h-[1.25rem] text-sm font-semibold text-rose-700", "");
   const submit = el(
     "button",
     "inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-900 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800",
     ""
   );
   submit.type = "submit";
-  submit.append(icon("user"), document.createTextNode("Увійти в кабінет"));
-  submit.querySelector(".icon").style.color = "#fff";
+  submit.append(icon("user", "icon-on-dark"), document.createTextNode("Увійти в кабінет"));
 
   form.append(groupLabel, nameField.wrap, emailField.wrap, err, submit);
   form.addEventListener("submit", (event) => {
@@ -345,7 +351,7 @@ function home() {
   );
   body.append(intro);
 
-  const grid = el("div", "grid gap-5 md:grid-cols-3");
+  const grid = el("div", "grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3");
   const blurb = {
     zahyst: "Теми з посібника. Читаєш розділ — здаєш тест.",
     lfk: "Теми з книжки ЛФК. Спершу сторінки, потім перевірка.",
@@ -377,18 +383,18 @@ function home() {
 function card(href, title, text, meta, num) {
   const node = link(
     href,
-    "subject-card flex flex-col rounded-2xl border border-stone-300 bg-white p-6 pl-7 hover:border-emerald-800",
+    "subject-card flex h-full flex-col rounded-2xl border border-stone-300 bg-white p-5 pl-6 sm:p-6 sm:pl-7 hover:border-emerald-800",
     ""
   );
   const head = el("div", "flex items-start justify-between gap-3");
   const metaRow = el("span", "inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-900", "");
   metaRow.append(icon("book"), document.createTextNode(meta || ""));
   head.append(metaRow);
-  head.append(el("span", "font-serif text-3xl font-semibold text-stone-300", num || ""));
+  head.append(el("span", "font-serif text-2xl font-semibold text-stone-300 sm:text-3xl", num || ""));
   node.append(head);
-  node.append(el("span", "mt-3 font-serif text-2xl font-semibold leading-tight", title));
-  node.append(el("span", "mt-3 text-sm leading-6 text-stone-600", text));
-  const open = el("span", "mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-900", "");
+  node.append(el("span", "mt-3 font-serif text-xl font-semibold leading-tight sm:text-2xl", title));
+  node.append(el("span", "mt-3 flex-1 text-sm leading-6 text-stone-600", text));
+  const open = el("span", "mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-900 sm:mt-6", "");
   open.append(document.createTextNode("Відкрити"), icon("arrow"));
   node.append(open);
   return node;
@@ -429,7 +435,7 @@ function topicBook(course, lesson) {
     const label = el("div", "flex items-center gap-2 text-emerald-900");
     label.append(icon("book"), el("span", "text-xs font-semibold uppercase tracking-[0.14em]", "Книжка теми"));
     info.append(label);
-    info.append(el("p", "mt-1 font-serif text-xl font-semibold", "Сторінки " + lesson.from + "–" + lesson.to));
+    info.append(el("p", "mt-1 font-serif text-lg font-semibold sm:text-xl", "Сторінки " + lesson.from + "–" + lesson.to));
     info.append(el("p", "mt-1 text-sm leading-6 text-stone-600", "Маленький екран сторінки. Натисни — збільшиться для читання."));
     const tip = el("span", "mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-900", "");
     tip.append(icon("expand"), document.createTextNode("Збільшити"));
@@ -550,8 +556,8 @@ function lessonCard(course, lesson, index) {
   const open = isLessonOpen(course, index);
   const passed = isPassed(course, lesson);
   const node = open
-    ? link("#/" + course.id + "/u/" + lesson.id, "topic-row block rounded-2xl border border-stone-300 bg-white p-5", "")
-    : el("div", "block rounded-2xl border border-stone-200 bg-stone-50 p-5 opacity-80", "");
+    ? link("#/" + course.id + "/u/" + lesson.id, "topic-row block rounded-2xl border border-stone-300 bg-white p-4 sm:p-5", "")
+    : el("div", "block rounded-2xl border border-stone-200 bg-stone-50 p-4 opacity-80 sm:p-5", "");
 
   const top = el("div", "flex flex-wrap items-center justify-between gap-2");
   const badge = el("p", "inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-900", "");
@@ -564,7 +570,7 @@ function lessonCard(course, lesson, index) {
     top.append(scoreNode);
   }
   node.append(top);
-  node.append(el("h2", "mt-2 font-serif text-2xl font-semibold", lesson.title));
+  node.append(el("h2", "mt-2 font-serif text-xl font-semibold sm:text-2xl", lesson.title));
   const pages = el("p", "mt-2 inline-flex items-center gap-1.5 text-sm text-stone-600", "");
   pages.append(icon("book"), document.createTextNode("Сторінки " + lesson.from + "–" + lesson.to));
   node.append(pages);
@@ -605,20 +611,19 @@ function congratsBlock(course, lesson, index) {
   }
   const key = quizKey(course, lesson);
   const next = course.lessons[index + 1];
-  const actions = el("div", "mt-5 flex flex-wrap gap-2");
+  const actions = el("div", "btn-row mt-5");
   if (next) {
     const go = link(
       "#/" + course.id + "/u/" + next.id,
-      "inline-flex items-center gap-1.5 rounded-full bg-emerald-900 px-4 py-2 text-sm font-semibold text-white",
+      "inline-flex items-center gap-1.5 rounded-full bg-emerald-900 px-4 py-2.5 text-sm font-semibold text-white",
       ""
     );
-    go.append(document.createTextNode("Наступна тема"), icon("arrow"));
-    go.querySelector(".icon").style.color = "#fff";
+    go.append(document.createTextNode("Наступна тема"), icon("arrow", "icon-on-dark"));
     actions.append(go);
   }
   const retakeBtn = el(
     "button",
-    "inline-flex items-center gap-1.5 rounded-full border border-emerald-900/30 bg-white px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50",
+    "inline-flex items-center gap-1.5 rounded-full border border-emerald-900/30 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-50",
     ""
   );
   retakeBtn.type = "button";
@@ -630,7 +635,11 @@ function congratsBlock(course, lesson, index) {
     render();
   });
   actions.append(retakeBtn);
-  const back = link("#/" + course.id, "inline-flex items-center gap-1.5 rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700", "");
+  const back = link(
+    "#/" + course.id,
+    "inline-flex items-center gap-1.5 rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 hover:border-stone-400",
+    ""
+  );
   back.append(document.createTextNode("До списку тем"));
   actions.append(back);
   wrap.append(actions);
@@ -722,7 +731,7 @@ function quizBlock(course, lesson, index) {
   });
 
   const writeBox = el("div", "rounded-xl border border-stone-200 p-4");
-  const writeTitle = el("p", "inline-flex items-start gap-2 text-sm font-semibold text-stone-800", "");
+  const writeTitle = el("p", "inline-flex items-center gap-2 text-sm font-semibold leading-5 text-stone-800", "");
   writeTitle.append(
     icon("pen"),
     document.createTextNode(
@@ -741,8 +750,7 @@ function quizBlock(course, lesson, index) {
   writeInput.value = writeText;
   writeInput.placeholder = "Пиши тут за бажанням…";
   writeInput.setAttribute("aria-label", "Письмова відповідь (необовʼязково)");
-  writeInput.className =
-    "mt-3 w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-900 outline-none focus:border-emerald-900";
+  writeInput.className = "field-control mt-3";
   writeInput.addEventListener("input", () => {
     writeText = writeInput.value;
   });
@@ -751,11 +759,10 @@ function quizBlock(course, lesson, index) {
 
   const check = el(
     "button",
-    "mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-900 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800",
+    "mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800",
     ""
   );
-  check.append(icon("check"), document.createTextNode("Здати тест"));
-  check.querySelector(".icon").style.color = "#fff";
+  check.append(icon("check", "icon-on-dark"), document.createTextNode("Здати тест"));
   check.type = "button";
   check.setAttribute("aria-label", "Здати тест");
   check.addEventListener("click", async () => {

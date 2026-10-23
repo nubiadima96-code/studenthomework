@@ -1,12 +1,4 @@
 {
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/", "destination": "/site" },
-    { "source": "/books/:path*", "destination": "/site/books/:path*" },
-    { "source": "/img/:path*", "destination": "/site/img/:path*" },
-    { "source": "/vendor/:path*", "destination": "/site/vendor/:path*" },
-    { "source": "/:file(.*\\.(js|css|html|json|png|jpg|jpeg|webp|svg|pdf|gs))", "destination": "/site/:file" }
-  ],
   "headers": [
     {
       "source": "/site/books/(.*)",

@@ -417,6 +417,19 @@ function loginPage() {
     state.student = { group: g, name: n, email: mail };
     rememberProfile(state.student);
     save();
+    // фіксуємо вхід у таблицю (хто зайшов у кабінет)
+    sendToSheet({
+      group: g,
+      name: n,
+      email: mail,
+      course: "",
+      topicNum: "",
+      topicTitle: "Вхід у кабінет",
+      score: "",
+      total: "",
+      write: "",
+      status: "вхід",
+    });
     location.hash = "#/";
     render();
   });

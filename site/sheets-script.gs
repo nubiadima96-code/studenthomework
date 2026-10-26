@@ -7,8 +7,8 @@
  *   Виконувати від: мене
  *   Хто має доступ: усі
  *
- * Прогрес пишеться на окрему вкладку для кожної групи:
- *   «Прогрес 11-П», «Прогрес 30-ФІЗ»
+ * Прогрес з сайту (вхід + здані тести) пишеться на вкладку:
+ *   «Прогрес 11-П», «Прогрес 30-ФІЗ» тощо
  */
 
 var SHEET_ID = "1Fyrgxv9SJ2vYa4z3rNbfqGSTgKzXPg4himX-G67CqPI";
@@ -45,6 +45,14 @@ function ensureSheet_(group) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var tab = tabNameForGroup_(group);
   var sheet = ss.getSheetByName(tab);
+  if (!sheet) {
+    // якщо була вкладка «11-П Прогрес» — перейменувати
+    var alt = ss.getSheetByName(String(group || "").trim() + " Прогрес");
+    if (alt) {
+      alt.setName(tab);
+      sheet = alt;
+    }
+  }
   if (!sheet) {
     sheet = ss.insertSheet(tab);
     sheet.appendRow([
@@ -97,6 +105,6 @@ function doGet() {
     ensureSheet_(GROUPS[i]);
   }
   return ContentService.createTextOutput(
-    "Кабінет РЕГІК: прогрес по групах — " + GROUPS.map(tabNameForGroup_).join(", ")
+    "Кабінет РЕГІК OK · вкладки прогресу: " + GROUPS.map(tabNameForGroup_).join(", ")
   );
 }

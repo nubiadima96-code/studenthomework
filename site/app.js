@@ -471,6 +471,7 @@ function home() {
     zahyst: "Теми з посібника. Читаєш розділ — здаєш тест.",
     lfk: "Теми з книжки ЛФК. Спершу сторінки, потім перевірка.",
     anatomia: "Теми з підручника. Читаєш — відповідаєш на тест.",
+    omz: "Теми з посібника ОМЗ. Читаєш сторінки — здаєш тест.",
   };
   const list = coursesForGroup();
   list.forEach((course, index) => {
@@ -697,7 +698,8 @@ async function mountBook(scroller, src, status, fromPage, toPage) {
 }
 
 function topicArtSrc(courseId, index) {
-  const id = courseId === "lfk" || courseId === "anatomia" ? courseId : "zahyst";
+  const id =
+    courseId === "lfk" ? "lfk" : courseId === "anatomia" || courseId === "omz" ? "anatomia" : "zahyst";
   return "img/topics/" + id + "-" + ((index % 4) + 1) + ".jpg";
 }
 

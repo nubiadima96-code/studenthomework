@@ -8,3 +8,4 @@ site/books/zahyst-tmp.pdf
 .vercel
 .env
 .env.*
+.venv
